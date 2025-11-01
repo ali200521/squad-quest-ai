@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, Clock, Send } from "lucide-react";
+import { Users, Clock, Send, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import SquadChat from "@/components/SquadChat";
@@ -48,7 +48,7 @@ export default function ChallengeRoom() {
           squad_members(
             id,
             role,
-            profiles(username, display_name, avatar_url)
+            profiles(username, display_name, avatar_url, current_level, total_xp)
           )
         `)
         .eq("id", squadId)
@@ -57,6 +57,28 @@ export default function ChallengeRoom() {
       return data;
     },
     enabled: !!squadId,
+  });
+
+  const { data: opponentSquad } = useQuery({
+    queryKey: ["opponentSquad", squad?.opponent_squad_id],
+    queryFn: async () => {
+      if (!squad?.opponent_squad_id) return null;
+      const { data, error } = await supabase
+        .from("squads")
+        .select(`
+          *,
+          squad_members(
+            id,
+            role,
+            profiles(username, display_name, avatar_url, current_level, total_xp)
+          )
+        `)
+        .eq("id", squad.opponent_squad_id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!squad?.opponent_squad_id,
   });
 
   useEffect(() => {
@@ -202,16 +224,17 @@ export default function ChallengeRoom() {
           </div>
 
           <div className="space-y-6">
+            {/* Your Squad Card */}
             <Card className="p-6 border-primary/20 sticky top-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-lg">Squad: {squad.name}</h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  <h3 className="font-bold text-lg">Your Squad</h3>
+                </div>
+                <Badge variant="secondary">{squad.status}</Badge>
               </div>
-              <Badge className="mb-4" variant="secondary">
-                {squad.status}
-              </Badge>
 
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-4">
                 {squad.squad_members?.map((member: any) => (
                   <div key={member.id} className="flex items-center gap-3">
                     <Avatar>
@@ -223,16 +246,56 @@ export default function ChallengeRoom() {
                       <p className="font-medium">
                         {member.profiles?.display_name || member.profiles?.username}
                       </p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {member.role}
-                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="capitalize">{member.role}</span>
+                        <span>Lvl {member.profiles?.current_level || 1}</span>
+                        <span>{member.profiles?.total_xp || 0} XP</span>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {squad.bot_mode && (
+                <Badge variant="outline" className="w-full justify-center">
+                  <Bot className="w-3 h-3 mr-1" />
+                  Bot Practice Mode
+                </Badge>
+              )}
             </Card>
 
-            <SquadChat squadId={squadId || ""} />
+            {/* Opponent Squad Card */}
+            {opponentSquad && (
+              <Card className="p-6 border-destructive/20 bg-destructive/5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-destructive" />
+                  <h3 className="font-bold text-lg">Opponent Squad</h3>
+                </div>
+
+                <div className="space-y-3">
+                  {opponentSquad.squad_members?.map((member: any) => (
+                    <div key={member.id} className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback className="bg-destructive/20">
+                          {member.profiles?.username?.[0]?.toUpperCase() || "O"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium">
+                          {member.profiles?.display_name || member.profiles?.username}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>Lvl {member.profiles?.current_level || 1}</span>
+                          <span>{member.profiles?.total_xp || 0} XP</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            <SquadChat squadId={squadId || ""} botMode={squad.bot_mode || false} />
           </div>
         </div>
       </div>

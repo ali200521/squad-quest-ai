@@ -6,17 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SquadChatProps {
   squadId: string;
+  botMode?: boolean;
 }
 
-export default function SquadChat({ squadId }: SquadChatProps) {
+export default function SquadChat({ squadId, botMode = false }: SquadChatProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
+  const [isSendingBotResponse, setIsSendingBotResponse] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: currentUser } = useQuery({
@@ -57,6 +59,19 @@ export default function SquadChat({ squadId }: SquadChatProps) {
     enabled: !!squadId,
   });
 
+  const { data: squadMembers } = useQuery({
+    queryKey: ["squadMembers", squadId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("squad_members")
+        .select("user_id, profiles(username)")
+        .eq("squad_id", squadId);
+      if (error) throw error;
+      return data;
+    },
+    enabled: botMode && !!squadId,
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: async (messageText: string) => {
       if (!currentUser) throw new Error("Not authenticated");
@@ -69,9 +84,52 @@ export default function SquadChat({ squadId }: SquadChatProps) {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      const userMessage = message;
       setMessage("");
       queryClient.invalidateQueries({ queryKey: ["squadMessages", squadId] });
+
+      // Generate bot responses if in bot mode
+      if (botMode && squadMembers && currentUser) {
+        setIsSendingBotResponse(true);
+        
+        // Get bot teammates (exclude current user)
+        const botTeammates = squadMembers.filter(m => m.user_id !== currentUser.id);
+        
+        // Generate responses for 2 random bot teammates
+        const respondingBots = botTeammates.sort(() => Math.random() - 0.5).slice(0, 2);
+        
+        for (let i = 0; i < respondingBots.length; i++) {
+          const bot = respondingBots[i];
+          
+          // Add delay between bot responses (500ms, 1000ms)
+          await new Promise(resolve => setTimeout(resolve, 500 + i * 500));
+          
+          try {
+            const { data, error } = await supabase.functions.invoke("generate-bot-chat-response", {
+              body: {
+                userMessage,
+                botName: bot.profiles?.username || "Teammate"
+              }
+            });
+
+            if (error) throw error;
+
+            // Insert bot response
+            await supabase.from("squad_chat_messages").insert({
+              squad_id: squadId,
+              user_id: bot.user_id,
+              message: data.response,
+            });
+
+            queryClient.invalidateQueries({ queryKey: ["squadMessages", squadId] });
+          } catch (error) {
+            console.error("Failed to generate bot response:", error);
+          }
+        }
+        
+        setIsSendingBotResponse(false);
+      }
     },
     onError: (error: any) => {
       toast({
@@ -112,7 +170,7 @@ export default function SquadChat({ squadId }: SquadChatProps) {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
+    if (message.trim() && !sendMessageMutation.isPending && !isSendingBotResponse) {
       sendMessageMutation.mutate(message);
     }
   };
@@ -169,17 +227,21 @@ export default function SquadChat({ squadId }: SquadChatProps) {
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message..."
-            disabled={sendMessageMutation.isPending}
+            placeholder={isSendingBotResponse ? "Bots are responding..." : "Type your message..."}
+            disabled={sendMessageMutation.isPending || isSendingBotResponse}
             className="flex-1"
           />
           <Button
             type="submit"
-            disabled={!message.trim() || sendMessageMutation.isPending}
+            disabled={!message.trim() || sendMessageMutation.isPending || isSendingBotResponse}
             size="icon"
             className="bg-gradient-hero"
           >
-            <Send className="w-4 h-4" />
+            {isSendingBotResponse ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </Button>
         </div>
       </form>

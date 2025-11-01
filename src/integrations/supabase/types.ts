@@ -479,6 +479,7 @@ export type Database = {
       squads: {
         Row: {
           average_level: number | null
+          bot_mode: boolean | null
           challenge_id: string
           created_at: string | null
           id: string
@@ -489,6 +490,7 @@ export type Database = {
         }
         Insert: {
           average_level?: number | null
+          bot_mode?: boolean | null
           challenge_id: string
           created_at?: string | null
           id?: string
@@ -499,6 +501,7 @@ export type Database = {
         }
         Update: {
           average_level?: number | null
+          bot_mode?: boolean | null
           challenge_id?: string
           created_at?: string | null
           id?: string
