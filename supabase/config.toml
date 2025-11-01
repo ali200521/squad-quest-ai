@@ -8,3 +8,12 @@ verify_jwt = true
 
 [functions.create-1v1-match]
 verify_jwt = true
+
+[functions.find-1v1-opponent]
+verify_jwt = true
+
+[functions.create-bot-squad-match]
+verify_jwt = true
+
+[functions.generate-bot-chat-response]
+verify_jwt = true

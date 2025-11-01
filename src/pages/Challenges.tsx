@@ -137,6 +137,68 @@ const Challenges = () => {
     }
   };
 
+  const handleFindOpponent = async (challengeId: string) => {
+    setIsJoining(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("find-1v1-opponent", {
+        body: { userId: user.id, challengeId }
+      });
+
+      if (error) throw error;
+
+      if (data.status === 'matched') {
+        toast({
+          title: "Opponent Found!",
+          description: "Starting your 1v1 match",
+        });
+        navigate(`/challenge/${challengeId}/squad/${data.squadId}`);
+      } else {
+        toast({
+          title: "Searching...",
+          description: "Looking for an opponent",
+        });
+        
+        // Poll for match every 3 seconds
+        const pollInterval = setInterval(async () => {
+          const { data: pollData } = await supabase.functions.invoke("find-1v1-opponent", {
+            body: { userId: user.id, challengeId }
+          });
+
+          if (pollData?.status === 'matched') {
+            clearInterval(pollInterval);
+            toast({
+              title: "Opponent Found!",
+              description: "Starting your 1v1 match",
+            });
+            navigate(`/challenge/${challengeId}/squad/${pollData.squadId}`);
+          }
+        }, 3000);
+
+        // Stop polling after 60 seconds
+        setTimeout(() => clearInterval(pollInterval), 60000);
+      }
+    } catch (error) {
+      console.error("Error finding opponent:", error);
+      toast({
+        title: "Error",
+        description: "Failed to find opponent",
+        variant: "destructive",
+      });
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   const handleJoinSquad = async (challengeId: string) => {
     setIsJoining(true);
     try {
@@ -152,8 +214,8 @@ const Challenges = () => {
 
       const { data, error } = await supabase.functions.invoke("match-squad", {
         body: {
-          challengeId,
           userId: user.id,
+          challengeId,
         },
       });
 
@@ -161,7 +223,7 @@ const Challenges = () => {
 
       toast({
         title: "Joined Squad!",
-        description: "You've been matched with a squad",
+        description: "Finding your teammates...",
       });
 
       navigate(`/challenge/${challengeId}/squad/${data.squadId}`);
@@ -288,12 +350,22 @@ const Challenges = () => {
                         <span className="font-medium">{getTimeUntil(challenge.starts_at)}</span>
                       </div>
                       <Button
-                        onClick={() => handleTestWithBot1v1(challenge.id)}
-                        disabled={testingBotId !== null}
+                        onClick={() => handleFindOpponent(challenge.id)}
+                        disabled={isJoining}
                         className="w-full"
                         variant="outline"
                       >
-                        Find Opponent
+                        {isJoining ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Searching...
+                          </>
+                        ) : (
+                          <>
+                            <Swords className="w-4 h-4 mr-2" />
+                            Find Opponent
+                          </>
+                        )}
                       </Button>
                     </div>
                   </CardContent>

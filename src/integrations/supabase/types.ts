@@ -217,6 +217,45 @@ export type Database = {
           },
         ]
       }
+      match_queue: {
+        Row: {
+          challenge_id: string
+          created_at: string | null
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_queue_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_requests: {
         Row: {
           challenge_id: string

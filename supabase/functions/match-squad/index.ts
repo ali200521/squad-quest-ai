@@ -12,26 +12,26 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, skillAreaId, challengeId } = await req.json();
-    console.log('Matching squad for:', { userId, skillAreaId, challengeId });
+    const { userId, challengeId } = await req.json();
+    console.log('Matching squad for:', { userId, challengeId });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user's skill level
-    const { data: userSkill } = await supabase
-      .from('user_skill_levels')
-      .select('level')
-      .eq('user_id', userId)
-      .eq('skill_area_id', skillAreaId)
+    // Get user's overall level from profile
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('current_level')
+      .eq('id', userId)
       .single();
 
-    if (!userSkill) {
-      throw new Error('User skill level not found');
+    if (profileError || !userProfile) {
+      console.error('User profile not found:', profileError);
+      throw new Error('User profile not found');
     }
 
-    const userLevel = userSkill.level;
+    const userLevel = userProfile.current_level || 1;
     const levelRange = 1; // Match with users within ±1 level
 
     // Find existing squad that needs members
@@ -72,13 +72,13 @@ serve(async (req) => {
           .from('squad_members')
           .select(`
             user:profiles (
-              user_skill_levels!inner (level)
+              current_level
             )
           `)
           .eq('squad_id', squadId);
 
         const levels = members?.map((m: any) => 
-          m.user.user_skill_levels.find((s: any) => s.skill_area_id === skillAreaId)?.level || 1
+          m.user?.current_level || 1
         ) || [];
         const avgLevel = levels.reduce((a, b) => a + b, 0) / levels.length;
 
