@@ -8,6 +8,8 @@ import { Users, Clock, Trophy, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+import { Header } from "@/components/Header";
+
 export default function Challenges() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,7 +25,7 @@ export default function Challenges() {
           skill_areas(name, icon),
           squads(id, status, squad_members(count))
         `)
-        .eq("status", "active")
+        .in("status", ["active", "pending"])
         .order("starts_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -90,8 +92,10 @@ export default function Challenges() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Squad Challenges
@@ -154,7 +158,8 @@ export default function Challenges() {
             );
           })}
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
