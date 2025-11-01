@@ -217,6 +217,41 @@ export type Database = {
           },
         ]
       }
+      match_requests: {
+        Row: {
+          challenge_id: string
+          created_at: string | null
+          from_user_id: string
+          id: string
+          status: string
+          to_user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string | null
+          from_user_id: string
+          id?: string
+          status?: string
+          to_user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string | null
+          from_user_id?: string
+          id?: string
+          status?: string
+          to_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_requests_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -370,6 +405,38 @@ export type Database = {
         }
         Relationships: []
       }
+      squad_chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          squad_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          squad_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          squad_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_chat_messages_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_members: {
         Row: {
           id: string
@@ -416,6 +483,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          opponent_squad_id: string | null
           status: string | null
           total_score: number | null
         }
@@ -425,6 +493,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          opponent_squad_id?: string | null
           status?: string | null
           total_score?: number | null
         }
@@ -434,6 +503,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          opponent_squad_id?: string | null
           status?: string | null
           total_score?: number | null
         }
@@ -443,6 +513,13 @@ export type Database = {
             columns: ["challenge_id"]
             isOneToOne: false
             referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squads_opponent_squad_id_fkey"
+            columns: ["opponent_squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
             referencedColumns: ["id"]
           },
         ]
