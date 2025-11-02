@@ -9,35 +9,33 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-
   try {
     const { topic, difficulty, numQuestions } = await req.json();
     if (!topic || !difficulty || !numQuestions) {
       throw new Error("Missing required parameters: topic, difficulty, or numQuestions");
     }
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const PPLX_API_KEY = Deno.env.get("PPLX_API_KEY");
+    if (!PPLX_API_KEY) {
+      throw new Error("PPLX_API_KEY is not configured");
     }
 
-    const systemPrompt =
-      `You are an educational AI. Please generate a quiz for students. ` +
-      `Topic: ${topic}\n` +
-      `Difficulty: ${difficulty}\n` +
-      `Number of questions: ${numQuestions}\n` +
-      `Return the quiz as a JSON array of objects. Each object should include: question, options (A,B,C,D), correct_answer (A/B/C/D), and a short explanation.`;
+    // Compose your quiz prompt for Perplexity
+    const prompt = `Create a ${numQuestions}-question multiple choice quiz about "${topic}", difficulty level: ${difficulty}.
+    Return the quiz as JSON array: each object must have question, options (A,B,C,D), correct_answer (A/B/C/D), and short explanation.`;
 
     const payload = {
-      contents: [
-        { role: "user", parts: [{ text: systemPrompt }] }
+      model: "sonar-medium-chat", // You can also try "sonar-small-chat" or "sonar-large-chat"
+      messages: [
+        { role: "user", content: prompt }
       ]
     };
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      "https://api.perplexity.ai/chat/completions",
       {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${PPLX_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
@@ -46,14 +44,12 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Gemini API error: ${response.status} ${errorText}`);
+      throw new Error(`Perplexity API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    const quizContent =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "[]";
-
+    // You want the AI's reply; it comes as choices[0].message.content
+    const quizContent = data.choices?.[0]?.message?.content || "[]";
     return new Response(
       JSON.stringify({ quiz: quizContent }),
       {
