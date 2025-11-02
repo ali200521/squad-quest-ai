@@ -21,8 +21,8 @@ AI Integration: Lovable AI API endpoints for quiz generation and chat bots
 ⚡ How to Run Locally
 1. Clone the repository
 bash
-git clone https://github.com/ali200521/squad-quest-ai
-cd squad-quest-ai
+git clone https://github.com/ali200521/codebattle
+cd codebattle
 2. Install dependencies
 bash
 npm install
