@@ -11,88 +11,67 @@ serve(async (req) => {
   }
 
   try {
-    const { skillArea, difficulty, topic } = await req.json();
-    console.log('Generating quiz for:', { skillArea, difficulty, topic });
-     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const { userMessage, botName } = await req.json();
+    if (!userMessage) {
+      throw new Error("Missing required parameter: userMessage");
+    }
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
+      throw new Error("GEMINI_API_KEY is not configured");
     }
-    
-    const prompt = `You are a quiz generator that returns only valid JSON. Never include markdown formatting or code blocks.
 
-Generate a coding quiz with 5 multiple choice questions about ${topic} for ${skillArea} at ${difficulty} level.
+    const systemPrompt = `You are ${botName || 'an AI teammate'} in a coding challenge squad battle. You are helpful, encouraging, and strategic.
+Your responses should be:
+- Short (1-2 sentences max)
+- Natural and conversational
+- Supportive and team-oriented
+- Occasionally mention your progress (e.g., "Working on question 2!", "Almost done with this one!")
+- Use emojis sparingly but appropriately
+Keep the vibe friendly and competitive. You're here to help the team win!`;
 
-Return ONLY valid JSON in this exact format (no markdown, no code blocks):
-
-{
-  "questions": [
-    {
-      "question": "Question text here",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": 0,
-      "explanation": "Brief explanation of the correct answer"
-    }
-  ]
-}
-
-Make questions practical and relevant to real-world coding scenarios.`;
+    // Gemini expects input as 'contents' list
+    const payload = {
+      contents: [
+        { role: "user", parts: [{ text: systemPrompt + "\n" + userMessage }] }
+      ]
+    };
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          }
-        }),
+        body: JSON.stringify(payload)
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('AI response:', content);
+    const botResponse =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "I couldn't generate a response.";
 
-    // Clean up the response to extract JSON
-    let cleanContent = content.trim();
-    if (cleanContent.startsWith('```json')) {
-      cleanContent = cleanContent.replace(/```json\n?/, '').replace(/```\n?$/, '');
-    } else if (cleanContent.startsWith('```')) {
-      cleanContent = cleanContent.replace(/```\n?/, '').replace(/```\n?$/, '');
-    }
-
-    const quiz = JSON.parse(cleanContent);
-
-    return new Response(JSON.stringify(quiz), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (error) {
-    console.error('Error in generate-quiz function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Failed to generate quiz',
-        details: error instanceof Error ? error.stack : undefined
-      }),
+      JSON.stringify({ response: botResponse }),
       {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error("Error in generate-bot-chat-response:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
