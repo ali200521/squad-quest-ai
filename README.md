@@ -1,4 +1,4 @@
-Squad Quest AI – Code Battle
+CodeBattle – Code Battle
 A real-time coding quiz and squad challenge platform built with Vite, TypeScript, React, shadcn-ui, Tailwind CSS, and Supabase backend.
 AI-powered teammate chat and quiz generation is handled via Lovable AI (external API), with flexible deployment.
 
@@ -6,23 +6,16 @@ AI-powered teammate chat and quiz generation is handled via Lovable AI (external
 Project URL: codebattle916.lovable.app
 
 🔥 Features
-Live squad-based coding quiz battles
-
-AI teammate chat with short, context-aware responses
-
-Quiz generation for React, API, performance, and more
-
-User skill levels and XP tracking
-
-Realtime leaderboard and squad chat
-
-Responsive UI powered by Tailwind/shadcn-ui
+- Live squad-based coding quiz battles
+- AI teammate chat with short, context-aware responses
+- Quiz generation for React, API, performance, and more
+- User skill levels and XP tracking
+- Realtime leaderboard and squad chat
+- Responsive UI powered by Tailwind/shadcn-ui
 
 🛠️ Tech Stack
 Frontend: Vite + TypeScript + React + shadcn-ui + Tailwind CSS
-
 Backend: Supabase Edge Functions (for chat and quiz AI)
-
 AI Integration: Lovable AI API endpoints for quiz generation and chat bots
 
 ⚡ How to Run Locally
