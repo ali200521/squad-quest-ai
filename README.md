@@ -1,73 +1,95 @@
-# Welcome to your Lovable project
+Squad Quest AI – Code Battle
+A real-time coding quiz and squad challenge platform built with Vite, TypeScript, React, shadcn-ui, Tailwind CSS, and Supabase backend.
+AI-powered teammate chat and quiz generation is handled via Lovable AI (external API), with flexible deployment.
 
-## Project info
+🌐 Live Demo
+Project URL: codebattle916.lovable.app
 
-**URL**: https://lovable.dev/projects/f6c3c48c-e150-477f-a28f-1fd934ddfd66
+🔥 Features
+Live squad-based coding quiz battles
 
-## How can I edit this code?
+AI teammate chat with short, context-aware responses
 
-There are several ways of editing your application.
+Quiz generation for React, API, performance, and more
 
-**Use Lovable**
+User skill levels and XP tracking
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f6c3c48c-e150-477f-a28f-1fd934ddfd66) and start prompting.
+Realtime leaderboard and squad chat
 
-Changes made via Lovable will be committed automatically to this repo.
+Responsive UI powered by Tailwind/shadcn-ui
 
-**Use your preferred IDE**
+🛠️ Tech Stack
+Frontend: Vite + TypeScript + React + shadcn-ui + Tailwind CSS
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Backend: Supabase Edge Functions (for chat and quiz AI)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+AI Integration: Lovable AI API endpoints for quiz generation and chat bots
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+⚡ How to Run Locally
+1. Clone the repository
+bash
+git clone https://github.com/ali200521/squad-quest-ai
+cd squad-quest-ai
+2. Install dependencies
+bash
+npm install
+3. Start the development server
+bash
 npm run dev
-```
+Visit http://localhost:5173 to view the app.
 
-**Edit a file directly in GitHub**
+4. Set up Supabase backend
+Create a Supabase project and tables as outlined in supabase-database-setup.sql.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Deploy Edge Functions for bot chat and quiz generation:
 
-**Use GitHub Codespaces**
+bash
+supabase functions deploy generate-bot-chat-response
+supabase functions deploy generate-quiz
+Add your Lovable API key to function environment variables.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+5. Connect Lovable AI
+The Supabase Edge Functions invoke Lovable API endpoints (chat/completions) for AI chat and quiz features.
 
-## What technologies are used for this project?
+AI responses are processed and displayed in squad chat and quiz screens.
 
-This project is built with:
+6. Deploy to Lovable
+Once you’re ready, use Lovable's “Share → Publish” feature to deploy to your custom URL (as above).
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+🧠 Project Structure
+text
+/
+├─ public/
+├─ src/
+│  ├─ components/
+│  ├─ pages/
+│  ├─ integrations/
+│  └─ ...
+├─ supabase/
+│  └─ functions/
+├─ supabase-database-setup.sql
+├─ README.md
+├─ package.json
+└─ ... other configs
+📝 About AI Integration
+The backend runs on Supabase and calls Lovable AI APIs.
 
-## How can I deploy this project?
+You can change models/endpoints by updating Edge Function code.
 
-Simply open [Lovable](https://lovable.dev/projects/f6c3c48c-e150-477f-a28f-1fd934ddfd66) and click on Share -> Publish.
+API keys and configuration should be managed via environment variables (never hardcoded).
 
-## Can I connect a custom domain to my Lovable project?
+👤 Authors & Contributors
+ali200521
 
-Yes, you can!
+claude
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+lovable-dev[bot]
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+📋 License
+MIT (customize if you need a different license)
+
+✨ Custom Domain & Deployment
+You can connect your own domain to your Lovable project via Project → Settings → Domains.
+
+For more details, see Lovable docs on domain setup.
+
